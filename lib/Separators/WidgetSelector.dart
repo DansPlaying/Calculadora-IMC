@@ -12,7 +12,6 @@ class WidgetSelector extends StatefulWidget {
 
 class _WidgetSelectorState extends State<WidgetSelector> {
   @override
-
   bool validar1, validar2;
 
   Widget build(BuildContext context) {
@@ -54,6 +53,17 @@ class _WidgetSelectorState extends State<WidgetSelector> {
         child: TextFormField(
           maxLength: 3,
           controller: widget.controllerSize,
+          validator: (value) {
+            if (value == '.') {
+              return 'El valor no puede ser .';
+            } else if (value == '+') {
+              return 'El valor no puede ser +';
+            } else if (value == '-') {
+              return 'El valor no puede ser -';
+            } else {
+              return null;
+            }
+          },
           decoration: InputDecoration(
             hintText: 'Altura (Cm)',
             icon: Icon(

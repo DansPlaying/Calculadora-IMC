@@ -1,3 +1,4 @@
+import 'package:calculadora_imc/services/calcularWeight.dart';
 import 'package:flutter/material.dart';
 
 import 'package:calculadora_imc/Separators/ParteInferior.dart';
@@ -21,87 +22,77 @@ class _Calculator1State extends State<Calculator1> {
   final myFormKey = GlobalKey<FormState>();
   final decimal = Decimal;
   int idealWeight = 1;
-  int banderaBotones= 0;
+  int banderaBotones = 0;
 
   String ourIMC = '';
   String suggestedWeight = '';
 
-//Calcular peso mujer
-  void weight() {
+  void errorConDialogo(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.black,
+          contentTextStyle: TextStyle(color: Colors.white, fontSize: 20.0),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(40.0)),
+          title: Text('Error'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(
+              message,
+            ),
+            Divider(
+              height: 30.0,
+            ),
+            FlutterLogo(size: 100.0),
+          ]),
+          actions: [
+            FlatButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Ok'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  bool validarInputs(valor) {
+    if (valor == '.' || valor == '+' || valor == '-' || valor == '') {
+      errorConDialogo(
+          'Hay signos invalidos ingresados como: . , +, - o espacio vacio ');
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /// Esta funcion se encarga de calcular el peso dada 2 parametros
+  void calcularPeso({String weight, String size}) {
     int decimals = 2;
     int fad = pow(10, decimals);
 
-    if((controllerWeight.text).toString()=='.'|| (controllerSize.text).toString()=='.'||(controllerWeight.text).toString()=='+'|| (controllerSize.text).toString()=='+'||(controllerWeight.text).toString()=='-'|| (controllerSize.text).toString()=='-'||(controllerWeight.text).toString()==''|| (controllerSize.text).toString()=='')
-        { showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(
-            backgroundColor: Colors.black,
-            contentTextStyle: TextStyle(color: Colors.white, fontSize: 20.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40.0),),
-            title: Text('Error'),
-            content: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('Hay signos invalidos ingresados como: . , +, - o espacio vacio '),
-              Divider(height: 30.0,),
-              FlutterLogo(size: 100.0),
-            ]),
-            actions: [
-              FlatButton(
-                onPressed: (){
-                  Navigator.of(context).pop();
-                },
-                 child: Text('Ok'))   
-                 ],
-          );
-        });}
-  else {      
-
-      if (double.parse(controllerWeight.text)!=0 && double.parse(controllerSize.text)!=0 && double.parse(controllerWeight.text)*100 >100 && double.parse(controllerSize.text)>140 ){
-     
-    if (myFormKey.currentState.validate()) {
-      double weight = double.parse(controllerWeight.text);
-      double heightUsed = (double.parse(controllerSize.text) / 100) * 2;
-      double d = weight / heightUsed;
-      d = (d * fad).round() / fad;
-
-
-      double suggested = (idealWeight * weight) / d;
-      suggested = (suggested * fad).round() / fad;
+    if (validarInputs(weight) || validarInputs(size)) {
+      errorConDialogo('Valor invalido');
+    } else {
+      double weightDouble = double.parse(weight);
+      double sizeDouble = double.parse(size);
+      List<double> resp = weightFromTwoStrings(
+          weight: weightDouble, size: sizeDouble, idealWeight: idealWeight);
 
       setState(() {
-        ourIMC = "IMC: $d";
-        suggestedWeight = "Suggested Weight:  $suggested";
+        ourIMC = "IMC: ${resp[1]}";
+        suggestedWeight = "Suggested Weight:  ${resp[0]}";
       });
-     }
+
+      if (resp[0] == 0 && resp[1] == 0) {
+        errorConDialogo(
+            'Los Valores Deben ser mayores a 0,  El peso y la altura deben ser reales');
+      }
     }
-    else {
-       showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(
-            backgroundColor: Colors.black,
-            contentTextStyle: TextStyle(color: Colors.white, fontSize: 20.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40.0)),
-            title: Text('Error'),
-            content: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('Los Valores Deben ser mayores a 0,  El peso y la altura deben ser reales'),
-              Divider(height: 30.0,),
-              FlutterLogo(size: 100.0),
-            ]),
-            actions: [
-              FlatButton(
-                onPressed: (){
-                  Navigator.of(context).pop();
-                  
-                },
-                 child: Text('Ok'))   
-                 ],
-          );
-        });
-    }
-    }  
   }
 
   @override
@@ -116,17 +107,22 @@ class _Calculator1State extends State<Calculator1> {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Text('Calculator IMC', style: TextStyle(color: Colors.black87, fontSize: 22.0), ),
-              
-              Icon(Icons.change_history, color: Colors.black,),
+              Text(
+                'Calculator IMC',
+                style: TextStyle(color: Colors.black87, fontSize: 22.0),
+              ),
+              Icon(
+                Icons.change_history,
+                color: Colors.black,
+              ),
             ],
           ),
           backgroundColor: color_base,
-          leading:
-              Icon(Icons.android, color: Colors.black,)
-              ),
+          leading: Icon(
+            Icons.android,
+            color: Colors.black,
+          )),
       body: Form(
-        
         key: myFormKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(8.0),
@@ -146,10 +142,14 @@ class _Calculator1State extends State<Calculator1> {
                         FlatButton(
                           onPressed: () {
                             idealWeight = 21;
-                            weight();
+                            calcularPeso(
+                              size: controllerSize.value.text,
+                              weight: controllerWeight.value.text,
+                            );
                           },
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.0)),
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
                           color: Colors.pinkAccent,
                           padding: EdgeInsets.all(10.0),
                           child: Column(
@@ -163,7 +163,10 @@ class _Calculator1State extends State<Calculator1> {
                         FlatButton(
                           onPressed: () {
                             idealWeight = 24;
-                            weight();
+                            calcularPeso(
+                              size: controllerSize.value.text,
+                              weight: controllerWeight.value.text,
+                            );
                           },
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30.0)),
